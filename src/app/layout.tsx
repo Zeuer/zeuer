@@ -4,6 +4,7 @@ import { CartProvider } from '@/context/CartContext';
 import { AuthProvider } from '@/context/AuthContext';
 import Header from '@/components/ui/Header';
 import Footer from '@/components/ui/Footer';
+import PageTracker from '@/components/PageTracker';
 
 export const metadata: Metadata = {
   title: 'Zeuer — Ropa Deportiva',
@@ -14,10 +15,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
+      <head>
+        <link rel="icon" href="/svg/logo-simple.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/svg/logo-simple.svg" />
+      </head>
       <body className="min-h-screen flex flex-col">
         <AuthProvider>
           <CartProvider>
             <Header />
+            <PageTracker />
             <main className="flex-1 pt-16 sm:pt-20">{children}</main>
             <Footer />
           </CartProvider>

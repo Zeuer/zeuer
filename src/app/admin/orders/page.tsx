@@ -54,11 +54,47 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_OPTIONS = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 
+// Custom confirmation modal
+function ConfirmModal({ show, title, message, onConfirm, onCancel }: {
+  show: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-surface-dark border border-border rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-fade-in">
+        <h3 className="font-unbounded text-lg font-bold text-cold-white mb-2">{title}</h3>
+        <p className="text-sm text-muted mb-6">{message}</p>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 rounded-lg text-sm bg-surface-elevated border border-border text-cold-white hover:bg-surface-dark transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [trackingInputs, setTrackingInputs] = useState<Record<string, { code: string; carrier: string }>>({});
+  const [confirmModal, setConfirmModal] = useState<{ show: boolean; title: string; message: string; action: () => void }>({
+    show: false, title: '', message: '', action: () => {},
+  });
 
   useEffect(() => {
     loadOrders();
@@ -109,20 +145,39 @@ export default function AdminOrdersPage() {
     } catch { /* ignore */ }
   }
 
-  async function deleteOrder(id: string) {
-    if (!confirm('¿Eliminar esta orden permanentemente?')) return;
-    try {
-      const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
-      if (res.ok) setOrders(orders.filter((o) => o._id !== id));
-    } catch { /* ignore */ }
+  function requestDeleteOrder(id: string) {
+    setConfirmModal({
+      show: true,
+      title: 'Eliminar orden',
+      message: '¿Estás seguro de que quieres eliminar esta orden permanentemente? Esta acción no se puede deshacer.',
+      action: async () => {
+        try {
+          const res = await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+            setOrders((prev) => prev.filter((o) => o._id !== id));
+            setExpandedId(null);
+          }
+        } catch { /* ignore */ }
+        setConfirmModal({ show: false, title: '', message: '', action: () => {} });
+      },
+    });
   }
 
-  async function deleteAllOrders() {
-    if (!confirm('¿Eliminar TODAS las órdenes? Esta acción no se puede deshacer.')) return;
-    try {
-      const res = await fetch('/api/orders/all', { method: 'DELETE' });
-      if (res.ok) setOrders([]);
-    } catch { /* ignore */ }
+  function requestDeleteAll() {
+    setConfirmModal({
+      show: true,
+      title: 'Eliminar TODAS las órdenes',
+      message: '¿Estás seguro de que quieres eliminar TODAS las órdenes? Esta acción es irreversible y no se puede deshacer.',
+      action: async () => {
+        try {
+          const res = await fetch('/api/orders/all', { method: 'DELETE' });
+          if (res.ok) {
+            setOrders([]);
+          }
+        } catch { /* ignore */ }
+        setConfirmModal({ show: false, title: '', message: '', action: () => {} });
+      },
+    });
   }
 
   function toggleExpanded(id: string) {
@@ -131,11 +186,20 @@ export default function AdminOrdersPage() {
 
   return (
     <div>
+      {/* Confirm Modal */}
+      <ConfirmModal
+        show={confirmModal.show}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.action}
+        onCancel={() => setConfirmModal({ show: false, title: '', message: '', action: () => {} })}
+      />
+
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-unbounded text-2xl font-bold">Órdenes</h1>
         {orders.length > 0 && (
           <button
-            onClick={deleteAllOrders}
+            onClick={requestDeleteAll}
             className="px-4 py-2 rounded-lg text-xs bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
           >
             🗑 Eliminar todas
@@ -316,7 +380,7 @@ export default function AdminOrdersPage() {
                           ))}
                         </select>
                         <button
-                          onClick={() => deleteOrder(o._id)}
+                          onClick={() => requestDeleteOrder(o._id)}
                           className="px-3 py-2 rounded-lg text-xs bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
                         >
                           🗑

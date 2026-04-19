@@ -13,6 +13,7 @@ interface Product {
   images: string[];
   sizes: string[];
   colors: { name: string; hex: string }[];
+  colorImages?: Record<string, string[]>;
   category: string;
   stock: number;
   moqEnabled?: boolean;
@@ -40,6 +41,16 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  // Get images for the currently selected color
+  function getActiveImages(): string[] {
+    if (!product) return [];
+    const ci = product.colorImages;
+    if (ci && selectedColor && ci[selectedColor]?.length > 0) {
+      return ci[selectedColor];
+    }
+    return product.images.length > 0 ? product.images : ['/images/jersey.png'];
+  }
+
   useEffect(() => {
     async function load() {
       // Check static first
@@ -55,10 +66,25 @@ export default function ProductPage() {
         const res = await fetch(`/api/products/${id}`);
         if (res.ok) {
           const p = await res.json();
+          // Convert mongoose Map to plain object if needed
+          if (p.colorImages && typeof p.colorImages === 'object') {
+            const ci: Record<string, string[]> = {};
+            for (const [k, v] of Object.entries(p.colorImages)) {
+              ci[k] = v as string[];
+            }
+            p.colorImages = ci;
+          }
           setProduct(p);
-          setMainImage(p.images?.[0] || '');
           setSelectedSize(p.sizes?.[0] || '');
-          setSelectedColor(p.colors?.[0]?.name || '');
+          const firstColor = p.colors?.[0]?.name || '';
+          setSelectedColor(firstColor);
+          // Set initial image based on first color
+          const colorImgs = p.colorImages?.[firstColor];
+          if (colorImgs?.length > 0) {
+            setMainImage(colorImgs[0]);
+          } else {
+            setMainImage(p.images?.[0] || '');
+          }
           if (p.moqEnabled && p.minOrderQty > 1) {
             setQuantity(p.minOrderQty);
           }
@@ -68,10 +94,21 @@ export default function ProductPage() {
     load();
   }, [id]);
 
+  // When color changes, update images
+  useEffect(() => {
+    if (!product) return;
+    const imgs = getActiveImages();
+    if (imgs.length > 0 && !imgs.includes(mainImage)) {
+      setMainImage(imgs[0]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedColor]);
+
   function handleAddToCart() {
     if (!product) return;
     const moq = product.moqEnabled ? (product.minOrderQty || 1) : 1;
     const qty = Math.max(quantity, moq);
+    const imgs = getActiveImages();
     addItem({
       productId: product._id,
       name: product.name,
@@ -79,7 +116,7 @@ export default function ProductPage() {
       quantity: qty,
       size: selectedSize,
       color: selectedColor,
-      image: product.images[0] || '',
+      image: imgs[0] || product.images[0] || '',
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -93,6 +130,8 @@ export default function ProductPage() {
     );
   }
 
+  const activeImages = getActiveImages();
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
@@ -102,16 +141,16 @@ export default function ProductPage() {
             <img
               src={mainImage}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-opacity duration-300"
             />
           </div>
-          {product.images.length > 1 && (
-            <div className="flex gap-3 mt-4">
-              {product.images.map((img, i) => (
+          {activeImages.length > 1 && (
+            <div className="flex gap-3 mt-4 overflow-x-auto pb-2">
+              {activeImages.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setMainImage(img)}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${mainImage === img ? 'border-electric-blue' : 'border-border hover:border-border-hover'}`}
+                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${mainImage === img ? 'border-electric-blue' : 'border-border hover:border-border-hover'}`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>

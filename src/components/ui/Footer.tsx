@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-2">
-            <img src="/svg/logo.svg" alt="Zeuer" className="w-32 mb-4 opacity-80" />
+            <img src="/svg/logo.svg" alt="Zeuer" className="w-32 mb-4" style={{ filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
             <p className="text-sm text-muted max-w-sm">
               Zeuer nace desde la disciplina y la superación personal.
               No seguimos tendencias, creamos identidad.

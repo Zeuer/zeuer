@@ -11,6 +11,7 @@ export default function EditProductPage() {
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingColor, setUploadingColor] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: '', description: '', price: '', category: '',
     sizes: '',
@@ -20,6 +21,7 @@ export default function EditProductPage() {
     moqEnabled: false,
     minOrderQty: '1',
     colors: [{ name: '', hex: '#0A6CFF' }],
+    colorImages: {} as Record<string, string[]>,
   });
 
   useEffect(() => {
@@ -28,6 +30,13 @@ export default function EditProductPage() {
         const res = await fetch(`/api/products/${id}`);
         if (res.ok) {
           const p = await res.json();
+          // Convert mongoose Map to plain object
+          let ci: Record<string, string[]> = {};
+          if (p.colorImages) {
+            if (p.colorImages instanceof Map || typeof p.colorImages === 'object') {
+              ci = typeof p.colorImages.toJSON === 'function' ? p.colorImages.toJSON() : { ...p.colorImages };
+            }
+          }
           setForm({
             name: p.name,
             description: p.description,
@@ -40,6 +49,7 @@ export default function EditProductPage() {
             moqEnabled: p.moqEnabled || false,
             minOrderQty: p.minOrderQty?.toString() || '1',
             colors: p.colors?.length > 0 ? p.colors : [{ name: '', hex: '#0A6CFF' }],
+            colorImages: ci,
           });
         }
       } catch { /* ignore */ }
@@ -67,6 +77,35 @@ export default function EditProductPage() {
     setUploading(false);
   }
 
+  async function handleColorImageUpload(colorName: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !colorName) return;
+    setUploadingColor(colorName);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.url) {
+        const existing = form.colorImages[colorName] || [];
+        setForm({
+          ...form,
+          colorImages: { ...form.colorImages, [colorName]: [...existing, data.url] },
+        });
+      }
+    } catch { /* ignore */ }
+    setUploadingColor(null);
+  }
+
+  function removeColorImage(colorName: string, index: number) {
+    const imgs = [...(form.colorImages[colorName] || [])];
+    imgs.splice(index, 1);
+    setForm({
+      ...form,
+      colorImages: { ...form.colorImages, [colorName]: imgs },
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -83,6 +122,7 @@ export default function EditProductPage() {
         moqEnabled: form.moqEnabled,
         minOrderQty: parseInt(form.minOrderQty) || 1,
         colors: form.colors.filter((c) => c.name),
+        colorImages: form.colorImages,
       };
       const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
@@ -118,28 +158,55 @@ export default function EditProductPage() {
         <Input label="Categoría" value={form.category} onChange={(e) => updateField('category', e.target.value)} required />
         <Input label="Tallas (separadas por coma)" value={form.sizes} onChange={(e) => updateField('sizes', e.target.value)} />
 
-        {/* Colors */}
+        {/* Colors with per-color image upload */}
         <div>
           <label className="block text-xs font-medium text-cold-white/70 mb-1.5 tracking-wide">Colores</label>
           {form.colors.map((c, i) => (
-            <div key={i} className="flex gap-2 mb-2">
-              <Input placeholder="Nombre" value={c.name} onChange={(e) => {
-                const nc = [...form.colors]; nc[i].name = e.target.value; setForm({ ...form, colors: nc });
-              }} />
-              <input type="color" value={c.hex} onChange={(e) => {
-                const nc = [...form.colors]; nc[i].hex = e.target.value; setForm({ ...form, colors: nc });
-              }} className="w-12 h-[46px] rounded-lg cursor-pointer bg-surface-dark border border-border" />
-              {form.colors.length > 1 && (
-                <button type="button" onClick={() => setForm({ ...form, colors: form.colors.filter((_, idx) => idx !== i) })} className="text-red-400 text-xs px-2">✕</button>
+            <div key={i} className="mb-4">
+              <div className="flex gap-2 mb-2">
+                <Input placeholder="Nombre" value={c.name} onChange={(e) => {
+                  const nc = [...form.colors]; nc[i].name = e.target.value; setForm({ ...form, colors: nc });
+                }} />
+                <input type="color" value={c.hex} onChange={(e) => {
+                  const nc = [...form.colors]; nc[i].hex = e.target.value; setForm({ ...form, colors: nc });
+                }} className="w-12 h-[46px] rounded-lg cursor-pointer bg-surface-dark border border-border" />
+                {form.colors.length > 1 && (
+                  <button type="button" onClick={() => setForm({ ...form, colors: form.colors.filter((_, idx) => idx !== i) })} className="text-red-400 text-xs px-2">✕</button>
+                )}
+              </div>
+              {/* Color-specific images */}
+              {c.name && (
+                <div className="ml-4 pl-4 border-l border-border">
+                  <p className="text-xs text-muted mb-2">Fotos para &quot;{c.name}&quot;</p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {(form.colorImages[c.name] || []).map((img, idx) => (
+                      <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeColorImage(c.name, idx)}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-[8px] flex items-center justify-center"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-elevated border border-border hover:border-electric-blue/30 transition-colors text-xs cursor-pointer">
+                    {uploadingColor === c.name ? 'Subiendo...' : `📁 Foto de ${c.name}`}
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleColorImageUpload(c.name, e)} disabled={uploadingColor === c.name} />
+                  </label>
+                </div>
               )}
             </div>
           ))}
           <button type="button" onClick={() => setForm({ ...form, colors: [...form.colors, { name: '', hex: '#ffffff' }] })} className="text-xs text-electric-blue hover:text-cyan-accent mt-1">+ Agregar color</button>
         </div>
 
-        {/* Images */}
+        {/* General images */}
         <div>
-          <label className="block text-xs font-medium text-cold-white/70 mb-1.5 tracking-wide">Imágenes</label>
+          <label className="block text-xs font-medium text-cold-white/70 mb-1.5 tracking-wide">Imágenes generales</label>
+          <p className="text-xs text-muted mb-3">Fallback cuando no hay foto del color seleccionado</p>
           <div className="flex flex-wrap gap-3 mb-3">
             {form.images.map((img, i) => (
               <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-border">

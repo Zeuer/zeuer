@@ -8,6 +8,7 @@ export interface IProduct extends Document {
   images: string[];
   sizes: string[];
   colors: { name: string; hex: string }[];
+  colorImages: Record<string, string[]>;
   stock: number;
   featured: boolean;
   moqEnabled: boolean;
@@ -27,6 +28,7 @@ const ProductSchema = new Schema<IProduct>({
     hex: { type: String },
   }],
   stock: { type: Number, default: 0, min: 0 },
+  colorImages: { type: Map, of: [String], default: {} },
   featured: { type: Boolean, default: false },
   moqEnabled: { type: Boolean, default: false },
   minOrderQty: { type: Number, default: 1, min: 1 },
