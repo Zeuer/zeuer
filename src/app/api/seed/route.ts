@@ -82,12 +82,23 @@ const SEED_PRODUCTS = [
 
 export async function POST(req: NextRequest) {
   try {
-    const { secret } = await req.json();
+    const { secret, action, email, newPassword } = await req.json();
     if (secret !== process.env.JWT_SECRET) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     await dbConnect();
+
+    // Password reset action
+    if (action === 'reset-password' && email && newPassword) {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
+      }
+      user.password = await hashPassword(newPassword);
+      await user.save();
+      return NextResponse.json({ message: 'Contraseña actualizada' });
+    }
 
     // Seed admin user
     const adminExists = await User.findOne({ email: 'admin@zeuer.com' });
