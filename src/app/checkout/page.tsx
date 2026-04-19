@@ -12,13 +12,25 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const [orderComplete, setOrderComplete] = useState(false);
+  const [error, setError] = useState('');
   const [address, setAddress] = useState({
     name: '', street: '', city: '', state: '', zip: '', country: 'México',
+  });
+  const [guestContact, setGuestContact] = useState({
+    phone: '', email: '',
   });
 
   async function createOrder(paymentId: string) {
     try {
-      await fetch('/api/orders', {
+      setError('');
+
+      // Validate guest phone
+      if (!user && !guestContact.phone.trim()) {
+        setError('Ingresa tu número de teléfono para continuar');
+        return;
+      }
+
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -27,21 +39,22 @@ export default function CheckoutPage() {
           paymentMethod: 'paypal',
           paymentId,
           shippingAddress: address,
+          guestPhone: !user ? guestContact.phone : undefined,
+          guestEmail: !user ? guestContact.email : undefined,
         }),
       });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Error al procesar la orden');
+        return;
+      }
+
       clearCart();
       setOrderComplete(true);
-    } catch { /* handle error */ }
-  }
-
-  if (!user) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <h1 className="font-unbounded text-2xl font-bold mb-4">Checkout</h1>
-        <p className="text-muted mb-6">Inicia sesión para continuar</p>
-        <Link href="/login"><Button>Iniciar sesión</Button></Link>
-      </div>
-    );
+    } catch {
+      setError('Error al procesar la orden');
+    }
   }
 
   if (items.length === 0 && !orderComplete) {
@@ -61,7 +74,7 @@ export default function CheckoutPage() {
           <span className="text-green-400 text-3xl">✓</span>
         </div>
         <h1 className="font-unbounded text-2xl font-bold mb-4">¡Orden Completada!</h1>
-        <p className="text-muted mb-8">Gracias por tu compra. Recibirás un correo de confirmación.</p>
+        <p className="text-muted mb-8">Gracias por tu compra. {user ? 'Recibirás un correo de confirmación.' : 'Te contactaremos por WhatsApp para confirmar tu pedido.'}</p>
         <Link href="/products"><Button>Seguir comprando</Button></Link>
       </div>
     );
@@ -73,20 +86,57 @@ export default function CheckoutPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="font-unbounded text-3xl font-bold mb-8">CHECKOUT</h1>
 
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Shipping form */}
+        {/* Forms */}
         <div className="space-y-6">
-          <h2 className="font-unbounded text-lg font-semibold">Dirección de envío</h2>
-          <div className="space-y-4">
-            <Input label="Nombre completo" value={address.name} onChange={(e) => setAddress({ ...address, name: e.target.value })} required />
-            <Input label="Calle y número" value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} required />
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Ciudad" value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} required />
-              <Input label="Estado" value={address.state} onChange={(e) => setAddress({ ...address, state: e.target.value })} required />
+          {/* Guest contact info */}
+          {!user && (
+            <div className="bg-surface-dark border border-border rounded-2xl p-6">
+              <h2 className="font-unbounded text-lg font-semibold mb-1">Datos de contacto</h2>
+              <p className="text-xs text-muted mb-4">Te contactaremos por WhatsApp para confirmar tu pedido</p>
+              <div className="space-y-4">
+                <Input
+                  label="Teléfono (WhatsApp) *"
+                  type="tel"
+                  placeholder="10 dígitos"
+                  value={guestContact.phone}
+                  onChange={(e) => setGuestContact({ ...guestContact, phone: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Email (opcional)"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={guestContact.email}
+                  onChange={(e) => setGuestContact({ ...guestContact, email: e.target.value })}
+                />
+              </div>
+              <p className="text-xs text-muted mt-4">
+                ¿Ya tienes cuenta? <Link href="/login" className="text-electric-blue hover:underline">Inicia sesión</Link>
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Código postal" value={address.zip} onChange={(e) => setAddress({ ...address, zip: e.target.value })} required />
-              <Input label="País" value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value })} />
+          )}
+
+          {/* Shipping form */}
+          <div>
+            <h2 className="font-unbounded text-lg font-semibold mb-4">Dirección de envío</h2>
+            <div className="space-y-4">
+              <Input label="Nombre completo" value={address.name} onChange={(e) => setAddress({ ...address, name: e.target.value })} required />
+              <Input label="Calle y número" value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} required />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Ciudad" value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} required />
+                <Input label="Estado" value={address.state} onChange={(e) => setAddress({ ...address, state: e.target.value })} required />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Código postal" value={address.zip} onChange={(e) => setAddress({ ...address, zip: e.target.value })} required />
+                <Input label="País" value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value })} />
+              </div>
             </div>
           </div>
 

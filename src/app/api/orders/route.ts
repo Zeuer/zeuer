@@ -23,9 +23,6 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-    }
 
     await dbConnect();
     const body = await req.json();
@@ -34,8 +31,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 });
     }
 
+    // Guest orders require at least a phone number
+    if (!user && !body.guestPhone) {
+      return NextResponse.json({ error: 'Se requiere un número de teléfono para pedidos sin cuenta' }, { status: 400 });
+    }
+
     const order = await Order.create({
-      userId: user.userId,
+      userId: user?.userId || undefined,
+      guestEmail: body.guestEmail || undefined,
+      guestPhone: body.guestPhone || undefined,
       items: body.items,
       total: body.total,
       paymentMethod: body.paymentMethod || 'paypal',

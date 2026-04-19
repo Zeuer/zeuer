@@ -11,7 +11,9 @@ export interface IOrderItem {
 }
 
 export interface IOrder extends Document {
-  userId: string;
+  userId?: string;
+  guestEmail?: string;
+  guestPhone?: string;
   items: IOrderItem[];
   total: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
@@ -29,7 +31,9 @@ export interface IOrder extends Document {
 }
 
 const OrderSchema = new Schema<IOrder>({
-  userId: { type: String, required: true },
+  userId: { type: String },
+  guestEmail: { type: String },
+  guestPhone: { type: String },
   items: [{
     productId: { type: String, required: true },
     name: { type: String, required: true },
