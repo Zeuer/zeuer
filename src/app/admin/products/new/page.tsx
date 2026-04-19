@@ -15,6 +15,8 @@ export default function NewProductPage() {
     images: [] as string[],
     stock: '50',
     featured: false,
+    moqEnabled: false,
+    minOrderQty: '1',
     colors: [{ name: '', hex: '#0A6CFF' }],
   });
 
@@ -51,6 +53,8 @@ export default function NewProductPage() {
         images: form.images,
         stock: parseInt(form.stock),
         featured: form.featured,
+        moqEnabled: form.moqEnabled,
+        minOrderQty: parseInt(form.minOrderQty) || 1,
         colors: form.colors.filter((c) => c.name),
       };
       const res = await fetch('/api/products', {
@@ -141,7 +145,6 @@ export default function NewProductPage() {
           </label>
         </div>
 
-        {/* Featured */}
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -151,6 +154,23 @@ export default function NewProductPage() {
           />
           <span className="text-sm">Producto destacado</span>
         </label>
+
+        {/* MOQ */}
+        <div className="bg-surface-elevated border border-border rounded-xl p-4">
+          <label className="flex items-center gap-3 cursor-pointer mb-3">
+            <input type="checkbox" checked={form.moqEnabled} onChange={(e) => updateField('moqEnabled', e.target.checked)} className="w-4 h-4 rounded accent-electric-blue" />
+            <span className="text-sm">Cantidad mínima de pedido (MOQ)</span>
+          </label>
+          {form.moqEnabled && (
+            <Input
+              label="Cantidad mínima"
+              type="number"
+              min="1"
+              value={form.minOrderQty}
+              onChange={(e) => updateField('minOrderQty', e.target.value)}
+            />
+          )}
+        </div>
 
         <div className="flex gap-4 pt-4">
           <Button type="submit" disabled={loading}>

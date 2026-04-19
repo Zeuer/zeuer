@@ -11,6 +11,8 @@ interface Product {
   category: string;
   stock: number;
   images: string[];
+  moqEnabled?: boolean;
+  minOrderQty?: number;
 }
 
 export default function AdminProductsPage() {
@@ -68,6 +70,7 @@ export default function AdminProductsPage() {
                   <th className="text-left px-4 py-3 text-xs font-unbounded uppercase tracking-wider text-muted">Categoría</th>
                   <th className="text-left px-4 py-3 text-xs font-unbounded uppercase tracking-wider text-muted">Precio</th>
                   <th className="text-left px-4 py-3 text-xs font-unbounded uppercase tracking-wider text-muted">Stock</th>
+                  <th className="text-left px-4 py-3 text-xs font-unbounded uppercase tracking-wider text-muted">MOQ</th>
                   <th className="text-right px-4 py-3 text-xs font-unbounded uppercase tracking-wider text-muted">Acciones</th>
                 </tr>
               </thead>
@@ -88,6 +91,13 @@ export default function AdminProductsPage() {
                       <span className={`${p.stock > 10 ? 'text-green-400' : p.stock > 0 ? 'text-yellow-400' : 'text-red-400'}`}>
                         {p.stock}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.moqEnabled ? (
+                        <span className="text-xs bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded">{p.minOrderQty || 1}</span>
+                      ) : (
+                        <span className="text-xs text-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">

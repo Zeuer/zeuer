@@ -30,6 +30,18 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Validate shipping address
+      if (!address.name.trim() || !address.street.trim() || !address.city.trim() || !address.state.trim() || !address.zip.trim()) {
+        setError('Completa todos los campos de dirección de envío');
+        return;
+      }
+
+      // Validate phone for all users
+      if (!guestContact.phone.trim() && !user) {
+        setError('Ingresa tu número de teléfono');
+        return;
+      }
+
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -39,8 +51,8 @@ export default function CheckoutPage() {
           paymentMethod: 'paypal',
           paymentId,
           shippingAddress: address,
-          guestPhone: !user ? guestContact.phone : undefined,
-          guestEmail: !user ? guestContact.email : undefined,
+          guestPhone: guestContact.phone || undefined,
+          guestEmail: guestContact.email || undefined,
         }),
       });
 
@@ -127,16 +139,25 @@ export default function CheckoutPage() {
           <div>
             <h2 className="font-unbounded text-lg font-semibold mb-4">Dirección de envío</h2>
             <div className="space-y-4">
-              <Input label="Nombre completo" value={address.name} onChange={(e) => setAddress({ ...address, name: e.target.value })} required />
-              <Input label="Calle y número" value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} required />
+              <Input label="Nombre completo *" value={address.name} onChange={(e) => setAddress({ ...address, name: e.target.value })} required />
+              <Input label="Calle y número *" value={address.street} onChange={(e) => setAddress({ ...address, street: e.target.value })} required />
               <div className="grid grid-cols-2 gap-4">
-                <Input label="Ciudad" value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} required />
-                <Input label="Estado" value={address.state} onChange={(e) => setAddress({ ...address, state: e.target.value })} required />
+                <Input label="Ciudad *" value={address.city} onChange={(e) => setAddress({ ...address, city: e.target.value })} required />
+                <Input label="Estado *" value={address.state} onChange={(e) => setAddress({ ...address, state: e.target.value })} required />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Input label="Código postal" value={address.zip} onChange={(e) => setAddress({ ...address, zip: e.target.value })} required />
+                <Input label="Código postal *" value={address.zip} onChange={(e) => setAddress({ ...address, zip: e.target.value })} required />
                 <Input label="País" value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value })} />
               </div>
+              {user && (
+                <Input
+                  label="Teléfono de contacto"
+                  type="tel"
+                  placeholder="10 dígitos"
+                  value={guestContact.phone}
+                  onChange={(e) => setGuestContact({ ...guestContact, phone: e.target.value })}
+                />
+              )}
             </div>
           </div>
 

@@ -121,7 +121,7 @@ export default function HomePage() {
         </div>
 
         <div className="relative overflow-hidden group/scroll">
-          <div className="flex gap-6 animate-scroll [animation-duration:40s] hover:[animation-play-state:paused]">
+          <div className="flex gap-6 animate-scroll [animation-duration:40s] sm:[animation-duration:40s] [animation-duration:20s] hover:[animation-play-state:paused]">
             {duplicatedProducts.map((p, i) => (
               <div key={i} className="flex-shrink-0 w-[280px] sm:w-[320px]">
                 <ProductCard
@@ -180,6 +180,32 @@ export default function HomePage() {
             Cada pieza está diseñada con precisión, pensada para quienes
             entienden que el rendimiento empieza desde lo que vistes.
           </p>
+        </div>
+      </section>
+
+      {/* Custom Jersey CTA */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto text-center bg-gradient-to-br from-electric-blue/10 via-surface-dark to-cyan-accent/5 border border-electric-blue/20 rounded-3xl p-10 sm:p-14">
+          <h2 className="font-unbounded text-xl sm:text-2xl font-bold mb-3">¿Buscas un uniforme para tu equipo?</h2>
+          <p className="text-muted mb-8 max-w-lg mx-auto">
+            Diseñamos jerseys personalizados para equipos, escuelas y organizaciones. Contáctanos y hagamos realidad tu diseño.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://wa.me/5217299684245?text=Hola%2C%20me%20interesa%20un%20jersey%20personalizado%20para%20mi%20equipo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 font-unbounded font-semibold text-sm uppercase tracking-wider px-8 py-4 bg-green-600 text-white rounded-lg transition-all duration-300 hover:bg-green-500 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)]"
+            >
+              <span>💬</span> WhatsApp
+            </a>
+            <a
+              href="mailto:zeuermedia@hotmail.com?subject=Jersey%20personalizado"
+              className="inline-flex items-center justify-center gap-2 font-unbounded font-semibold text-sm uppercase tracking-wider px-8 py-4 bg-deep-black text-cold-white border-2 border-electric-blue/50 rounded-lg transition-all duration-300 hover:border-electric-blue hover:shadow-[0_0_20px_rgba(10,108,255,0.4)]"
+            >
+              <span>✉️</span> Email
+            </a>
+          </div>
         </div>
       </section>
     </>

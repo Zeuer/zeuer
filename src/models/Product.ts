@@ -10,6 +10,8 @@ export interface IProduct extends Document {
   colors: { name: string; hex: string }[];
   stock: number;
   featured: boolean;
+  moqEnabled: boolean;
+  minOrderQty: number;
   createdAt: Date;
 }
 
@@ -26,6 +28,8 @@ const ProductSchema = new Schema<IProduct>({
   }],
   stock: { type: Number, default: 0, min: 0 },
   featured: { type: Boolean, default: false },
+  moqEnabled: { type: Boolean, default: false },
+  minOrderQty: { type: Number, default: 1, min: 1 },
   createdAt: { type: Date, default: Date.now },
 });
 

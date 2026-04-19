@@ -19,6 +19,8 @@ export interface IOrder extends Document {
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   paymentMethod: string;
   paymentId: string;
+  trackingCode?: string;
+  trackingCarrier?: string;
   shippingAddress: {
     name: string;
     street: string;
@@ -51,6 +53,8 @@ const OrderSchema = new Schema<IOrder>({
   },
   paymentMethod: { type: String, default: 'paypal' },
   paymentId: { type: String },
+  trackingCode: { type: String },
+  trackingCarrier: { type: String },
   shippingAddress: {
     name: { type: String },
     street: { type: String },

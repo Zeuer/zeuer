@@ -130,6 +130,28 @@ function ProductsContent() {
               <p className="text-muted text-lg">No se encontraron productos</p>
             </div>
           )}
+
+          {/* Custom Jersey CTA */}
+          <div className="mt-12 text-center bg-gradient-to-br from-electric-blue/10 via-surface-dark to-cyan-accent/5 border border-electric-blue/20 rounded-2xl p-8">
+            <h3 className="font-unbounded text-lg font-bold mb-2">¿Buscas un uniforme para tu equipo?</h3>
+            <p className="text-sm text-muted mb-6">Diseñamos jerseys personalizados. Contáctanos.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href="https://wa.me/5217299684245?text=Hola%2C%20me%20interesa%20un%20jersey%20personalizado"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 text-sm px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
+              >
+                💬 WhatsApp
+              </a>
+              <a
+                href="mailto:zeuermedia@hotmail.com?subject=Jersey%20personalizado"
+                className="inline-flex items-center justify-center gap-2 text-sm px-6 py-3 bg-surface-elevated border border-border text-cold-white rounded-lg hover:border-electric-blue transition-colors"
+              >
+                ✉️ Email
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -77,3 +77,10 @@ body {
   background: rgba(10, 108, 255, 0.3);
   color: #EAF6FF;
 }
+
+/* Faster scroll animation on mobile */
+@media (max-width: 640px) {
+  .animate-scroll {
+    animation-duration: 18s !important;
+  }
+}

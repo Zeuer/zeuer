@@ -15,6 +15,8 @@ interface Product {
   colors: { name: string; hex: string }[];
   category: string;
   stock: number;
+  moqEnabled?: boolean;
+  minOrderQty?: number;
 }
 
 const STATIC_PRODUCTS: Record<string, Product> = {
@@ -36,6 +38,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState('');
   const [mainImage, setMainImage] = useState('');
   const [added, setAdded] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     async function load() {
@@ -56,6 +59,9 @@ export default function ProductPage() {
           setMainImage(p.images?.[0] || '');
           setSelectedSize(p.sizes?.[0] || '');
           setSelectedColor(p.colors?.[0]?.name || '');
+          if (p.moqEnabled && p.minOrderQty > 1) {
+            setQuantity(p.minOrderQty);
+          }
         }
       } catch { /* fallback */ }
     }
@@ -64,11 +70,13 @@ export default function ProductPage() {
 
   function handleAddToCart() {
     if (!product) return;
+    const moq = product.moqEnabled ? (product.minOrderQty || 1) : 1;
+    const qty = Math.max(quantity, moq);
     addItem({
       productId: product._id,
       name: product.name,
       price: product.price,
-      quantity: 1,
+      quantity: qty,
       size: selectedSize,
       color: selectedColor,
       image: product.images[0] || '',
@@ -157,6 +165,35 @@ export default function ProductPage() {
             </div>
           )}
 
+          {/* MOQ badge */}
+          {product.moqEnabled && product.minOrderQty && product.minOrderQty > 1 && (
+            <div className="mt-3 inline-block bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-1.5">
+              <p className="text-xs text-yellow-400 font-medium">
+                ⚠ Pedido mínimo: {product.minOrderQty} unidades
+              </p>
+            </div>
+          )}
+
+          {/* Quantity selector */}
+          <div className="mt-6">
+            <h3 className="text-xs font-unbounded font-semibold uppercase tracking-wider mb-3">Cantidad</h3>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setQuantity(Math.max(product.moqEnabled ? (product.minOrderQty || 1) : 1, quantity - 1))}
+                className="w-10 h-10 rounded-xl border border-border text-cold-white/70 hover:border-electric-blue hover:text-cold-white transition-colors flex items-center justify-center"
+              >
+                −
+              </button>
+              <span className="w-12 text-center font-medium">{quantity}</span>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="w-10 h-10 rounded-xl border border-border text-cold-white/70 hover:border-electric-blue hover:text-cold-white transition-colors flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
           {/* Add to cart */}
           <div className="mt-8 flex gap-4">
             <Button
@@ -165,7 +202,7 @@ export default function ProductPage() {
               onClick={handleAddToCart}
               className={added ? '!bg-green-600 hover:!shadow-none' : ''}
             >
-              {added ? '✓ Agregado' : 'Agregar al carrito'}
+              {added ? '✓ Agregado' : `Agregar al carrito — $${(product.price * quantity).toLocaleString('es-MX')}`}
             </Button>
           </div>
 

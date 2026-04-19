@@ -75,6 +75,13 @@ export default function Header() {
                         Panel Admin
                       </Link>
                     )}
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-cold-white/70 hover:text-cold-white hover:bg-surface-elevated transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      Mi Cuenta
+                    </Link>
                     <button
                       onClick={() => { logout(); setUserMenuOpen(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-cold-white/70 hover:text-cold-white hover:bg-surface-elevated transition-colors"
@@ -129,6 +136,7 @@ export default function Header() {
             <Link href="/cart" className="text-sm text-cold-white/80 hover:text-cold-white transition-colors" onClick={() => setMenuOpen(false)}>Carrito ({itemCount})</Link>
             {isAdmin && <Link href="/admin" className="text-sm text-cyan-accent" onClick={() => setMenuOpen(false)}>Admin</Link>}
             {!user && <Link href="/login" className="text-sm text-electric-blue" onClick={() => setMenuOpen(false)}>Iniciar sesión</Link>}
+            {user && <Link href="/profile" className="text-sm text-cold-white/80 hover:text-cold-white transition-colors" onClick={() => setMenuOpen(false)}>Mi Cuenta</Link>}
             {user && (
               <button onClick={() => { logout(); setMenuOpen(false); }} className="text-left text-sm text-cold-white/60">
                 Cerrar sesión
